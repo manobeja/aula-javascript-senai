@@ -47,10 +47,6 @@ const connection = mysql.createConnection({
 });
   
   connection.connect();
-  
-  app.post('/sessoes', (req, res) => {
-    
-  });
 
 app.get('/sessoes', (req, res) => {
     connection.query("SELECT aluno, personal, tipo_de_treino, data, horario, observacoes FROM sessoes", (err, results) => {
@@ -94,6 +90,79 @@ app.put("/sessoes/:id", (req, res) => {
         }
 
         return res.status(200).send("Sessão atualizada com sucesso!")
+
+    });
+
+
+});
+
+app.post('/planos', (req, res) => {
+    const {nome, duracao_meses, preco, descricao} = req.body;
+
+if (!nome || typeof nome != 'string' || nome.trim() == '') {
+    return res.status(400).send('Nome é obrigatório e deve ser uma string não vazia.');
+}
+
+if (!duracao_meses || typeof duracao_meses != 'number' || duracao_meses <= 0) {
+    return res.status(400).send('A duração em meses é obrigatória.');
+}
+
+if (!preco || typeof preco != 'number' || preco <= 0) {
+    return res.status(400).send('O plano deve possuir um preço.');
+}
+
+
+connection.query(
+  'INSERT INTO planos (nome, duracao_meses, preco, descricao) VALUES (?, ?, ?, ?)',
+  [nome, duracao_meses, preco, descricao],
+  () => {
+    res.send('Seu plano foi cadastrado com sucesso!');
+  }
+);
+})
+
+app.get('/planos', (req, res) => {
+    connection.query("SELECT nome, duracao_meses, preco, descricao FROM planos", (err, results) => {
+        if (err) {
+            return res.status(500).send("Erro ao buscar os planos.")
+        }
+        res.status(200).send(results);
+    })
+})
+
+app.delete("/planos/:id", (req, res) => {
+    const {id} = req.params;
+
+    connection.query('DELETE FROM planos WHERE id = ?', [id], (err, results) => {
+        if (err) {
+            return res.status(500).send("Erro ao deletar.");
+        }
+        if (results.affectedRows === 0) {
+            return res.status(404).send("Plano não cadastrado.")
+        }
+
+        return res.status(200).send("Plano deletado com sucesso!")
+
+    });
+
+
+});
+
+
+app.put("/planos/:id", (req, res) => {
+    const {id} = req.params;
+    const { nome, duracao_meses, preco, descricao } = req.body;
+
+    const query = 'UPDATE planos SET nome = ?, duracao_meses = ?, preco = ?, descricao = ? WHERE id = ?';
+    connection.query(query, [nome, duracao_meses, preco, descricao, id], (err, results) => {
+        if (err) {
+            return res.status(500).send("Erro ao atualizar!");
+        }
+        if (results.affectedRows === 0) {
+            return res.status(404).send("Plano não encontrado!")
+        }
+
+        return res.status(200).send("Plano atualizado com sucesso!")
 
     });
 
